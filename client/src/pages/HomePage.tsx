@@ -1,10 +1,12 @@
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Clock, Eye } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Clock, Eye, MapPin } from "lucide-react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
+import { Map } from '../components/Map';
+
 
 const HomePage = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>("");
@@ -46,6 +48,8 @@ const HomePage = () => {
     category: issueCategories[i % issueCategories.length],
     status: issueStatuses[i % issueStatuses.length],
     location: `Location ${i + 1}`,
+    latitude: 30.7046 + i * 0.001,
+    longitude: 76.7179 + i * 0.001,
     time: `${Math.floor(Math.random() * 24) + 1} hours ago`,
     image: "/lovable-uploads/e61881f8-083f-4af9-a59f-20f4a7f9e3bd.png",
     priority: ["High", "Medium", "Low"][Math.floor(Math.random() * 3)],
@@ -191,7 +195,7 @@ const HomePage = () => {
                 </div>
 
                 {/* Issue Image */}
-                <div className="relative w-full h-32 bg-gradient-to-br from-muted to-muted/50 rounded-lg mb-4 overflow-hidden group-hover:scale-105 transition-transform duration-300">
+                {/* <div className="relative w-full h-32 bg-gradient-to-br from-muted to-muted/50 rounded-lg mb-4 overflow-hidden group-hover:scale-105 transition-transform duration-300">
                   <div className="absolute inset-0 flex items-center justify-center">
                     <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
                       <MapPin className="w-6 h-6 text-primary" />
@@ -205,7 +209,16 @@ const HomePage = () => {
                 {/* Issue Title */}
                 <h3 className="font-semibold text-card-foreground mb-2 group-hover:text-primary transition-colors line-clamp-2">
                   {issue.title}
-                </h3>
+                </h3> 
+                <div className="relative w-full h-32 rounded-lg mb-4 overflow-hidden group-hover:scale-105 transition-transform duration-300">
+  <Map
+    latitude={issue.latitude}     // add latitude to your mockIssues
+    longitude={issue.longitude}   // add longitude to your mockIssues
+  />
+  <div className="absolute top-2 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded">
+    {issue.votes} votes
+  </div>
+</div>
 
                 {/* Issue Description */}
                 <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
