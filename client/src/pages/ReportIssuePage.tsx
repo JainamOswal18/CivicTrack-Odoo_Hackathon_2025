@@ -7,11 +7,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { Camera, MapPin, Upload, ArrowLeft } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Camera, MapPin, Upload, ArrowLeft, CheckCircle } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
+import { issuesApi, ApiError } from "../services/api";
 
 const ReportIssuePage = () => {
   const navigate = useNavigate();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
+  
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -20,12 +25,35 @@ const ReportIssuePage = () => {
     location: ""
   });
   const [images, setImages] = useState<File[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
+
+  // Redirect if not authenticated
+  if (!authLoading && !isAuthenticated) {
+    navigate('/login');
+    return null;
+  }
+
+  // Show loading while checking authentication
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
+          <div className="text-sm text-muted-foreground">Loading...</div>
+        </div>
+      </div>
+    );
+  }
 
   const issueCategories = [
     "Roads", "Lighting", "Water Supply", "Cleanliness", "Public Safety", "Obstructions"
   ];
 
+  // Clear error when user starts typing
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    setError(null);
     setFormData(prev => ({
       ...prev,
       [e.target.id]: e.target.value
@@ -33,6 +61,7 @@ const ReportIssuePage = () => {
   };
 
   const handleCategoryChange = (value: string) => {
+    setError(null);
     setFormData(prev => ({
       ...prev,
       category: value
@@ -44,6 +73,23 @@ const ReportIssuePage = () => {
       ...prev,
       anonymous: checked
     }));
+  };
+
+  // Parse GPS coordinates from location string
+  const parseLocation = (locationString: string): { latitude: number; longitude: number; address?: string } => {
+    // Check if location string contains coordinates (lat, lng format)
+    const coordMatch = locationString.match(/(-?\d+\.?\d*),\s*(-?\d+\.?\d*)/);
+    
+    if (coordMatch) {
+      return {
+        latitude: parseFloat(coordMatch[1]),
+        longitude: parseFloat(coordMatch[2]),
+        address: locationString
+      };
+    }
+    
+    // If no coordinates found, return default (this should be handled better in production)
+    throw new Error('Please provide valid GPS coordinates or use the GPS button to get your current location');
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -75,11 +121,67 @@ const ReportIssuePage = () => {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Mock submission logic
-    console.log("Submitting issue:", formData, images);
-    navigate('/user-home');
+    
+    if (!formData.title || !formData.description || !formData.category) {
+      setError('Please fill in all required fields');
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      setError(null);
+
+      // Parse location to get coordinates
+      let coordinates;
+      try {
+        coordinates = parseLocation(formData.location);
+      } catch (locationError) {
+        setError(locationError instanceof Error ? locationError.message : 'Invalid location format');
+        return;
+      }
+
+      // Prepare issue data for API
+      const issueData = {
+        title: formData.title,
+        description: formData.description,
+        category: formData.category,
+        latitude: coordinates.latitude,
+        longitude: coordinates.longitude,
+        address: coordinates.address,
+        is_anonymous: formData.anonymous,
+        images: images.length > 0 ? images : undefined,
+      };
+
+      // Submit to backend
+      const response = await issuesApi.createIssue(issueData);
+      
+      console.log('Issue created successfully:', response);
+      setSuccess(true);
+      
+      // Redirect after a short delay to show success message
+      setTimeout(() => {
+        navigate('/user-home');
+      }, 2000);
+
+    } catch (error) {
+      console.error('Error creating issue:', error);
+      
+      if (error instanceof ApiError) {
+        // Handle API validation errors
+        if (error.errors && error.errors.length > 0) {
+          const errorMessages = error.errors.map(e => e.msg).join(', ');
+          setError(errorMessages);
+        } else {
+          setError(error.message);
+        }
+      } else {
+        setError('An unexpected error occurred. Please try again.');
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -113,6 +215,23 @@ const ReportIssuePage = () => {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Error Alert */}
+          {error && (
+            <Alert variant="destructive">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+
+          {/* Success Alert */}
+          {success && (
+            <Alert className="border-green-200 bg-green-50">
+              <CheckCircle className="h-4 w-4 text-green-600" />
+              <AlertDescription className="text-green-800">
+                Issue reported successfully! Redirecting to dashboard...
+              </AlertDescription>
+            </Alert>
+          )}
+
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Main Form */}
             <div className="lg:col-span-2 space-y-6">
@@ -189,7 +308,7 @@ const ReportIssuePage = () => {
                       </Button>
                     </div>
                     <p className="text-xs text-muted-foreground mt-1">
-                      GPS coordinates will be automatically captured
+                      GPS coordinates will be automatically captured. Format: latitude, longitude (e.g., 28.6139, 77.2090)
                     </p>
                   </div>
                 </CardContent>
@@ -304,13 +423,35 @@ const ReportIssuePage = () => {
                 <CardContent className="pt-6">
                   <Button 
                     type="submit" 
-                    className="w-full bg-primary hover:bg-primary/90"
-                    disabled={!formData.title || !formData.description || !formData.category}
+                    className="w-full bg-primary hover:bg-primary/90 disabled:opacity-50"
+                    disabled={
+                      !formData.title || 
+                      !formData.description || 
+                      !formData.category || 
+                      !formData.location ||
+                      isSubmitting ||
+                      success
+                    }
                   >
-                    Submit Report
+                    {isSubmitting ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        Submitting Report...
+                      </>
+                    ) : success ? (
+                      <>
+                        <CheckCircle className="w-4 h-4 mr-2" />
+                        Report Submitted!
+                      </>
+                    ) : (
+                      'Submit Report'
+                    )}
                   </Button>
                   <p className="text-xs text-muted-foreground text-center mt-2">
-                    Your report will be reviewed and published
+                    {isSubmitting 
+                      ? 'Uploading your report and images...' 
+                      : 'Your report will be reviewed and published'
+                    }
                   </p>
                 </CardContent>
               </Card>
