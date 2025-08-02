@@ -1,31 +1,40 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { MapPin, Clock, Eye, User, LogOut } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
 
 const UserHomePage = () => {
-  const [user, setUser] = useState<any>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>("");
   const [selectedStatus, setSelectedStatus] = useState<string>("");
   const [selectedDistance, setSelectedDistance] = useState<string>("");
   const navigate = useNavigate();
+  const { user, logout, isAuthenticated, isLoading } = useAuth();
 
-  useEffect(() => {
-    const userData = localStorage.getItem('user');
-    if (userData) {
-      setUser(JSON.parse(userData));
-    } else {
-      navigate('/login');
-    }
-  }, [navigate]);
+  // Redirect if not authenticated
+  if (!isLoading && !isAuthenticated) {
+    navigate('/login');
+    return null;
+  }
 
   const handleLogout = () => {
-    localStorage.removeItem('user');
+    logout();
     navigate('/');
   };
+
+  // Show loading while checking authentication
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-lg">Loading...</div>
+        </div>
+      </div>
+    );
+  }
 
   const issueCategories = [
     "Roads", "Lighting", "Water Supply", "Cleanliness", "Public Safety", "Obstructions"

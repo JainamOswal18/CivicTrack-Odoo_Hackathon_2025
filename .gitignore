@@ -4,9 +4,9 @@ server/logs/
 server/.env
 
 
-civictrack-frontend/node_modules/
-civictrack-frontend/dist/
-civictrack-frontend/.env
+client/node_modules/
+client/dist/
+client/.env
 
 *.db
 *.sqlite

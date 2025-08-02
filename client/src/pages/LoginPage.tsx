@@ -3,19 +3,36 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
 
 const LoginPage = () => {
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
+  const { login, error, clearError, isAuthenticated } = useAuth();
 
-  const handleLogin = (e: React.FormEvent) => {
+  // Redirect if already authenticated
+  if (isAuthenticated) {
+    navigate('/user-home');
+    return null;
+  }
+
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Mock login logic - in real app, this would integrate with JWT backend
-    if (username && password) {
-      localStorage.setItem('user', JSON.stringify({ username, isLoggedIn: true }));
+    if (!email || !password) return;
+
+    try {
+      setIsSubmitting(true);
+      clearError();
+      await login(email, password);
       navigate('/user-home');
+    } catch (error) {
+      // Error is handled by the context
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -42,14 +59,20 @@ const LoginPage = () => {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleLogin} className="space-y-6">
+            {error && (
+              <Alert variant="destructive">
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
+            
             <div className="space-y-2">
-              <Label htmlFor="username" className="text-sm font-medium">User Name</Label>
+              <Label htmlFor="email" className="text-sm font-medium">Email</Label>
               <Input
-                id="username"
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                placeholder="Enter your username"
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Enter your email"
                 className="h-11 transition-all duration-300 focus:ring-2 focus:ring-primary/20"
                 required
               />
@@ -79,10 +102,11 @@ const LoginPage = () => {
 
             <Button 
               type="submit" 
-              className="w-full h-11 bg-primary hover:bg-primary/90 transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5"
+              disabled={isSubmitting || !email || !password}
+              className="w-full h-11 bg-primary hover:bg-primary/90 transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 disabled:opacity-50"
               size="lg"
             >
-              Sign In
+              {isSubmitting ? "Signing In..." : "Sign In"}
             </Button>
 
             <div className="text-center">

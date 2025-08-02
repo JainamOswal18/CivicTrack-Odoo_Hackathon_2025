@@ -3,16 +3,25 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
 
 const RegisterPage = () => {
   const [formData, setFormData] = useState({
     username: "",
     email: "",
-    phone: "",
     password: ""
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
+  const { register, error, clearError, isAuthenticated } = useAuth();
+
+  // Redirect if already authenticated
+  if (isAuthenticated) {
+    navigate('/user-home');
+    return null;
+  }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData(prev => ({
@@ -21,16 +30,19 @@ const RegisterPage = () => {
     }));
   };
 
-  const handleRegister = (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Mock registration logic - in real app, this would integrate with JWT backend
-    if (formData.username && formData.email && formData.password) {
-      localStorage.setItem('user', JSON.stringify({ 
-        username: formData.username, 
-        email: formData.email,
-        isLoggedIn: true 
-      }));
+    if (!formData.username || !formData.email || !formData.password) return;
+
+    try {
+      setIsSubmitting(true);
+      clearError();
+      await register(formData.email, formData.password, formData.username);
       navigate('/user-home');
+    } catch (error) {
+      // Error is handled by the context
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -49,15 +61,25 @@ const RegisterPage = () => {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleRegister} className="space-y-4">
+            {error && (
+              <Alert variant="destructive">
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
+
             <div className="space-y-2">
-              <Label htmlFor="username">User Name</Label>
+              <Label htmlFor="username">Username</Label>
               <Input
                 id="username"
                 type="text"
                 value={formData.username}
                 onChange={handleChange}
+                placeholder="Enter username (3-20 characters)"
+                minLength={3}
+                maxLength={20}
                 required
               />
+              <p className="text-xs text-muted-foreground">Username must be 3-20 characters long</p>
             </div>
 
             <div className="space-y-2">
@@ -67,17 +89,7 @@ const RegisterPage = () => {
                 type="email"
                 value={formData.email}
                 onChange={handleChange}
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="phone">Phone</Label>
-              <Input
-                id="phone"
-                type="tel"
-                value={formData.phone}
-                onChange={handleChange}
+                placeholder="Enter your email"
                 required
               />
             </div>
@@ -89,24 +101,28 @@ const RegisterPage = () => {
                 type="password"
                 value={formData.password}
                 onChange={handleChange}
+                placeholder="Enter password (min 8 characters)"
+                minLength={8}
                 required
               />
+              <p className="text-xs text-muted-foreground">Password must be at least 8 characters long</p>
             </div>
 
             <div className="text-center">
               <p className="text-sm text-muted-foreground">
                 Already have an account?{" "}
                 <Link to="/login" className="text-primary hover:underline">
-                  Login
+                  Sign in
                 </Link>
               </p>
             </div>
 
             <Button 
               type="submit" 
-              className="w-full bg-primary hover:bg-primary/90"
+              disabled={isSubmitting || !formData.username || !formData.email || !formData.password}
+              className="w-full bg-primary hover:bg-primary/90 disabled:opacity-50"
             >
-              Register
+              {isSubmitting ? "Creating Account..." : "Register"}
             </Button>
           </form>
         </CardContent>
