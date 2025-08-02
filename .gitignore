@@ -3,6 +3,10 @@ server/dist/
 server/logs/
 server/.env
 
+
 civictrack-frontend/node_modules/
 civictrack-frontend/dist/
 civictrack-frontend/.env
+
+*.db
+*.sqlite
