@@ -19,7 +19,7 @@ const RegisterPage = () => {
 
   // Redirect if already authenticated
   if (isAuthenticated) {
-    navigate('/user-home');
+    navigate('/');
     return null;
   }
 
@@ -38,7 +38,7 @@ const RegisterPage = () => {
       setIsSubmitting(true);
       clearError();
       await register(formData.email, formData.password, formData.username);
-      navigate('/user-home');
+      navigate('/');
     } catch (error) {
       // Error is handled by the context
     } finally {

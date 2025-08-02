@@ -161,9 +161,9 @@ const ReportIssuePage = () => {
       setSuccess(true);
       
       // Redirect after a short delay to show success message
-      setTimeout(() => {
-        navigate('/user-home');
-      }, 2000);
+              setTimeout(() => {
+          navigate('/');
+        }, 2000);
 
     } catch (error) {
       console.error('Error creating issue:', error);

@@ -16,7 +16,7 @@ const LoginPage = () => {
 
   // Redirect if already authenticated
   if (isAuthenticated) {
-    navigate('/user-home');
+    navigate('/');
     return null;
   }
 
@@ -28,7 +28,7 @@ const LoginPage = () => {
       setIsSubmitting(true);
       clearError();
       await login(email, password);
-      navigate('/user-home');
+      navigate('/');
     } catch (error) {
       // Error is handled by the context
     } finally {
