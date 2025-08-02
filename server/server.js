@@ -3,6 +3,7 @@ import "dotenv/config";
 import { rateLimit } from "express-rate-limit";
 import authRoutes from "./routes/auth.js";
 import issueRoutes from "./routes/issues.js";
+import adminRoutes from "./routes/admin.js"
 import helmet from "helmet"
 
 const app = express();
@@ -26,6 +27,7 @@ app.use('/uploads', express.static('uploads'));
 
 app.use("/api/auth", authRoutes);
 app.use("/api/issues", issueRoutes);
+app.use("/api/admin", adminRoutes);
 
 app.get("/", (req, res) => {
   res.send("API is running");
