@@ -5,6 +5,22 @@ import authMiddleware from "../middleware/auth.js";
 const db = getDb();
 const router = express.Router();
 
+// Get all users for admin management
+// GET /api/admin/users
+router.get("/users", authMiddleware, (req, res) => {
+    db.all(
+        `SELECT id, email, username, is_banned, created_at 
+         FROM users 
+         ORDER BY created_at DESC`,
+        (err, users) => {
+            if (err) {
+                console.error("Error fetching users:", err);
+                return res.status(500).json({ error: "Failed to fetch users" });
+            }
+            res.json({ users });
+        }
+    );
+});
 
 // 1. Ban or unban a user
 // POST /api/admin/users/:id/ban { banned: true|false }
@@ -53,9 +69,13 @@ router.get("/flags/issues", authMiddleware, (req, res) => {
           
           const flaggedIssues = rows.map((r) => ({
             ...r,
-            images: r.images ? r.images.split(",") : [],
+            images: r.images
+              ? r.images
+                  .split(",")
+                  .map((filename) => `/uploads/issues/${filename}`)
+              : [],
           }));
-        res.json({ flaggedIssues: rows });
+        res.json({ flaggedIssues });
       }
     );
 });

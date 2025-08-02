@@ -153,35 +153,38 @@ router.post("/", authMiddleware, upload.array("images", 5), [
 });
 
 // Get nearby issues
-router.get("/nearby", [
+router.get(
+  "/nearby",
+  [
     query("lat").isFloat({ min: -90, max: 90 }),
     query("lng").isFloat({ min: -180, max: 180 }),
     query("radius").optional().isFloat({ min: 0.1, max: 5 }).toFloat(),
     query("category")
-        .optional()
-        .isIn([
-            "roads",
-            "lighting",
-            "water",
-            "cleanliness",
-            "safety",
-            "obstructions",
-        ]),
+      .optional()
+      .isIn([
+        "roads",
+        "lighting",
+        "water",
+        "cleanliness",
+        "safety",
+        "obstructions",
+      ]),
     query("status").optional().isIn(["reported", "in_progress", "resolved"]),
-], (req, res) => {
+  ],
+  (req, res) => {
     try {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return res.status(400).json({ errors: errors.array() });
-        }
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+      }
 
-        const { lat, lng, radius = 3, category, status } = req.query;
-        const userLat = parseFloat(lat);
-        const userLng = parseFloat(lng);
-        const searchRadius = parseFloat(radius);
+      const { lat, lng, radius = 3, category, status } = req.query;
+      const userLat = parseFloat(lat);
+      const userLng = parseFloat(lng);
+      const searchRadius = parseFloat(radius);
 
-        // Build query with filters
-        let query = `
+      // Build query with filters
+      let query = `
             SELECT i.*, 
                     GROUP_CONCAT(img.filename) as image_files
             FROM issues i
@@ -189,55 +192,110 @@ router.get("/nearby", [
             WHERE i.is_flagged = FALSE
             `;
 
-        const params = [];
+      const params = [];
 
-        if (category) {
-            query += " AND i.category = ?";
-            params.push(category);
+      if (category) {
+        query += " AND i.category = ?";
+        params.push(category);
+      }
+
+      if (status) {
+        query += " AND i.status = ?";
+        params.push(status);
+      }
+
+      query += " GROUP BY i.id ORDER BY i.created_at DESC";
+
+      db.all(query, params, (err, issues) => {
+        if (err) {
+          console.error("Error fetching issues:", err);
+          return res.status(500).json({ error: "Failed to fetch issues" });
         }
 
-        if (status) {
-            query += " AND i.status = ?";
-            params.push(status);
-        }
+        // Filter by distance and add distance field
+        const nearbyIssues = issues
+          .map((issue) => {
+            const distance = calculateDistance(
+              userLat,
+              userLng,
+              issue.latitude,
+              issue.longitude
+            );
+            return {
+              ...issue,
+              distance,
+              images: issue.image_files
+                ? issue.image_files
+                    .split(",")
+                    .map((filename) => `/uploads/issues/${filename}`)
+                : [],
+            };
+          })
+          .filter((issue) => issue.distance <= searchRadius)
+          .sort((a, b) => a.distance - b.distance);
 
-        query += " GROUP BY i.id ORDER BY i.created_at DESC";
-
-        db.all(query, params, (err, issues) => {
-            if (err) {
-                console.error("Error fetching issues:", err);
-                return res.status(500).json({ error: "Failed to fetch issues" });
-            }
-
-            // Filter by distance and add distance field
-            const nearbyIssues = issues
-                .map((issue) => {
-                    const distance = calculateDistance(
-                        userLat,
-                        userLng,
-                        issue.latitude,
-                        issue.longitude
-                    );
-                    return {
-                        ...issue,
-                        distance,
-                        images: issue.image_files ? issue.image_files.split(",") : [],
-                    };
-                })
-                .filter((issue) => issue.distance <= searchRadius)
-                .sort((a, b) => a.distance - b.distance);
-
-            res.json({
-                issues: nearbyIssues,
-                total: nearbyIssues.length,
-            });
+        res.json({
+          issues: nearbyIssues,
+          total: nearbyIssues.length,
         });
+      });
     } catch (error) {
-        console.error("Server error:", error);
-        res.status(500).json({ error: "Server error" });
+      console.error("Server error:", error);
+      res.status(500).json({ error: "Server error" });
     }
-}
+  }
 );
+
+// Get individual issue by ID
+router.get("/:id", (req, res) => {
+  try {
+    const issueId = req.params.id;
+
+    const query = `
+            SELECT i.*, 
+                   u.username as reporter_username,
+                   GROUP_CONCAT(img.filename) as image_files
+            FROM issues i
+            LEFT JOIN users u ON i.reporter_id = u.id
+            LEFT JOIN issue_images img ON i.id = img.issue_id
+            WHERE i.id = ?
+            GROUP BY i.id
+        `;
+
+    db.get(query, [issueId], (err, issue) => {
+      if (err) {
+        console.error("Error fetching issue:", err);
+        return res.status(500).json({ error: "Failed to fetch issue" });
+      }
+
+      if (!issue) {
+        return res.status(404).json({ error: "Issue not found" });
+      }
+
+      // Format the response
+      const formattedIssue = {
+        ...issue,
+        images: issue.image_files
+          ? issue.image_files
+              .split(",")
+              .map((filename) => `/uploads/issues/${filename}`)
+          : [],
+        reporter: issue.is_anonymous
+          ? "Anonymous User"
+          : issue.reporter_username || "Unknown User",
+      };
+
+      // Remove internal fields
+      delete formattedIssue.image_files;
+      delete formattedIssue.reporter_username;
+
+      res.json({ issue: formattedIssue });
+    });
+  } catch (error) {
+    console.error("Server error:", error);
+    res.status(500).json({ error: "Server error" });
+  }
+});
 
 // Flag an issue
 router.post("/:id/flag", authMiddleware, [

@@ -1,71 +1,166 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { MapPin, Clock, User, Flag, ArrowLeft } from "lucide-react";
-import { Link, useParams } from "react-router-dom";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { MapPin, Clock, User, Flag, ArrowLeft, Loader2, AlertCircle, CheckCircle } from "lucide-react";
+import { Link, useParams, useNavigate } from "react-router-dom";
+import { issuesApi } from "../services/api";
+import { useAuth } from "../contexts/AuthContext";
+import Map from "../components/Map";
+
+interface Issue {
+  id: number;
+  title: string;
+  description: string;
+  category: string;
+  status: string;
+  latitude: number;
+  longitude: number;
+  address?: string;
+  reporter: string;
+  is_anonymous: boolean;
+  flag_count: number;
+  images: string[];
+  created_at: string;
+  updated_at: string;
+}
 
 const IssueDetailPage = () => {
-  const { id } = useParams();
-  const [selectedCategory, setSelectedCategory] = useState<string>("");
-  const [selectedStatus, setSelectedStatus] = useState<string>("");
-  const [selectedDistance, setSelectedDistance] = useState<string>("");
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const { isAuthenticated, user } = useAuth();
+  
+  const [issue, setIssue] = useState<Issue | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [isReportingSpam, setIsReportingSpam] = useState(false);
+  const [spamReason, setSpamReason] = useState("");
+  const [spamReported, setSpamReported] = useState(false);
+  const [reportError, setReportError] = useState<string | null>(null);
 
-  const issueCategories = [
-    "Roads", "Lighting", "Water Supply", "Cleanliness", "Public Safety", "Obstructions"
-  ];
-
-  const issueStatuses = ["Reported", "In Progress", "Resolved"];
-  const distances = ["1 km", "3 km", "5 km"];
-
-  // Mock issue data
-  const issueData = {
-    id: id,
-    title: "Major pothole on Main Street",
-    description: "There is a big road pothole, is related about high volume of vehicles which is make dangerous vehicle to travel on.",
-    category: "Roads",
-    status: "Reported",
-    priority: "High",
-    location: "0.8 road information, is related information, progress again.",
-    reportedBy: "Anonymous User",
-    reportedDate: "Jan 02, 2025 - 10:36 AM",
-    lastUpdated: "Jan 02, 2025 - 10:36 AM",
-    images: ["/lovable-uploads/e61881f8-083f-4af9-a59f-20f4a7f9e3bd.png"],
-    activity: [
-      {
-        date: "Jan 02, 2025 - 10:36 AM",
-        action: "Reported by user",
-        user: "Anonymous",
-        status: "Reported"
-      },
-      {
-        date: "Jan 02, 2025 - 09:45 AM",
-        action: "Assigned to municipal worker",
-        user: "System",
-        status: "In Progress"
+  // Fetch issue data
+  useEffect(() => {
+    const fetchIssue = async () => {
+      if (!id) {
+        setError("Issue ID not provided");
+        setIsLoading(false);
+        return;
       }
-    ]
+
+      try {
+        setIsLoading(true);
+        setError(null);
+        const response = await issuesApi.getIssueById(id);
+        setIssue(response.issue);
+      } catch (error) {
+        console.error("Error fetching issue:", error);
+        setError(error instanceof Error ? error.message : "Failed to load issue");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchIssue();
+  }, [id]);
+
+  // Handle spam reporting
+  const handleReportSpam = async () => {
+    if (!issue || !isAuthenticated) return;
+
+    try {
+      setIsReportingSpam(true);
+      setReportError(null);
+      
+      await issuesApi.flagIssue(issue.id, spamReason);
+      setSpamReported(true);
+      setSpamReason("");
+      
+      // Update flag count locally
+      setIssue(prev => prev ? { ...prev, flag_count: prev.flag_count + 1 } : null);
+    } catch (error) {
+      console.error("Error reporting spam:", error);
+      setReportError(error instanceof Error ? error.message : "Failed to report spam");
+    } finally {
+      setIsReportingSpam(false);
+    }
+  };
+
+  const formatCategory = (category: string) => {
+    const categoryMap: { [key: string]: string } = {
+      "roads": "Roads",
+      "lighting": "Lighting", 
+      "water": "Water Supply",
+      "cleanliness": "Cleanliness",
+      "safety": "Public Safety",
+      "obstructions": "Obstructions"
+    };
+    return categoryMap[category.toLowerCase()] || category;
+  };
+
+  const formatStatus = (status: string) => {
+    const statusMap: { [key: string]: string } = {
+      "reported": "Reported",
+      "in_progress": "In Progress",
+      "resolved": "Resolved"
+    };
+    return statusMap[status.toLowerCase()] || status;
   };
 
   const getStatusColor = (status: string) => {
-    switch (status) {
-      case "Reported": return "bg-red-100 text-red-800";
-      case "In Progress": return "bg-yellow-100 text-yellow-800";
-      case "Resolved": return "bg-green-100 text-green-800";
+    switch (status.toLowerCase()) {
+      case "reported": return "bg-red-100 text-red-800";
+      case "in_progress": return "bg-yellow-100 text-yellow-800";
+      case "resolved": return "bg-green-100 text-green-800";
       default: return "bg-gray-100 text-gray-800";
     }
   };
 
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case "High": return "bg-red-100 text-red-800";
-      case "Medium": return "bg-yellow-100 text-yellow-800";
-      case "Low": return "bg-green-100 text-green-800";
-      default: return "bg-gray-100 text-gray-800";
-    }
+  const formatTimeAgo = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+    
+    if (diffInSeconds < 60) return 'Just now';
+    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} minutes ago`;
+    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} hours ago`;
+    return `${Math.floor(diffInSeconds / 86400)} days ago`;
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4" />
+          <p className="text-muted-foreground">Loading issue details...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !issue) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center max-w-md">
+          <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+          <h1 className="text-2xl font-bold mb-2">Issue Not Found</h1>
+          <p className="text-muted-foreground mb-4">
+            {error || "The issue you're looking for doesn't exist or has been removed."}
+          </p>
+          <Link to="/">
+            <Button>
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to Home
+            </Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -77,10 +172,10 @@ const IssueDetailPage = () => {
               <h1 className="text-2xl font-bold text-primary">CivicTrack</h1>
             </Link>
             <div className="flex gap-2">
-              <Link to="/search">
+              <Link to="/">
                 <Button variant="outline" className="border-primary text-primary hover:bg-primary hover:text-primary-foreground">
                   <ArrowLeft className="w-4 h-4 mr-1" />
-                  Back to Search
+                  Back to Home
                 </Button>
               </Link>
             </div>
@@ -88,231 +183,223 @@ const IssueDetailPage = () => {
         </div>
       </header>
 
-      <div className="flex">
-        {/* Sidebar Filters */}
-        <aside className="w-80 bg-card border-r min-h-[calc(100vh-4rem)] p-6">
-          <div className="space-y-4">
-            <h3 className="font-semibold">Filter Issues</h3>
-            
-            <div>
-              <label className="block text-sm font-medium mb-2">Categories</label>
-              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select category" />
-                </SelectTrigger>
-                <SelectContent>
-                  {issueCategories.map((category) => (
-                    <SelectItem key={category} value={category}>
-                      {category}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-2">Status</label>
-              <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select status" />
-                </SelectTrigger>
-                <SelectContent>
-                  {issueStatuses.map((status) => (
-                    <SelectItem key={status} value={status}>
-                      {status}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-2">Distance</label>
-              <Select value={selectedDistance} onValueChange={setSelectedDistance}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select distance" />
-                </SelectTrigger>
-                <SelectContent>
-                  {distances.map((distance) => (
-                    <SelectItem key={distance} value={distance}>
-                      {distance}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <Button className="w-full bg-primary hover:bg-primary/90">
-              Search Issues
-            </Button>
-          </div>
-        </aside>
-
-        {/* Main Content */}
-        <main className="flex-1 p-6">
-          <div className="max-w-4xl mx-auto">
+      {/* Main Content */}
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Issue Details */}
+          <div className="lg:col-span-2 space-y-6">
             {/* Issue Header */}
-            <div className="mb-6">
-              <div className="flex justify-between items-start mb-4">
+            <Card>
+              <CardHeader>
+                <div className="flex items-start justify-between">
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <Badge variant="secondary">
+                        {formatCategory(issue.category)}
+                      </Badge>
+                      <Badge className={getStatusColor(issue.status)}>
+                        {formatStatus(issue.status)}
+                      </Badge>
+                      {issue.flag_count > 0 && (
+                        <Badge variant="outline" className="text-orange-600">
+                          {issue.flag_count} flag{issue.flag_count !== 1 ? 's' : ''}
+                        </Badge>
+                      )}
+                    </div>
+                    <h1 className="text-2xl font-bold">{issue.title}</h1>
+                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                      <div className="flex items-center gap-1">
+                        <User className="w-4 h-4" />
+                        <span>Reported by {issue.reporter}</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Clock className="w-4 h-4" />
+                        <span>{formatTimeAgo(issue.created_at)}</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Report Spam Button */}
+                  {isAuthenticated && (
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button variant="outline" size="sm" className="text-orange-600 hover:text-orange-700">
+                          <Flag className="w-4 h-4 mr-2" />
+                          Report Spam
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Report as Spam</DialogTitle>
+                        </DialogHeader>
+                        <div className="space-y-4">
+                          <p className="text-sm text-muted-foreground">
+                            Help us maintain quality by reporting inappropriate content. 
+                            This will flag the issue for review by moderators.
+                          </p>
+                          
+                          <div>
+                            <Label htmlFor="reason">Reason (optional)</Label>
+                            <Textarea
+                              id="reason"
+                              placeholder="Why are you reporting this issue?"
+                              value={spamReason}
+                              onChange={(e) => setSpamReason(e.target.value)}
+                              className="mt-1"
+                            />
+                          </div>
+                          
+                          {reportError && (
+                            <Alert variant="destructive">
+                              <AlertCircle className="h-4 w-4" />
+                              <AlertDescription>{reportError}</AlertDescription>
+                            </Alert>
+                          )}
+                          
+                          {spamReported && (
+                            <Alert>
+                              <CheckCircle className="h-4 w-4" />
+                              <AlertDescription>
+                                Thank you for your report. The issue has been flagged for review.
+                              </AlertDescription>
+                            </Alert>
+                          )}
+                          
+                          <div className="flex justify-end gap-2">
+                            <DialogTrigger asChild>
+                              <Button variant="outline">Cancel</Button>
+                            </DialogTrigger>
+                            <Button 
+                              onClick={handleReportSpam}
+                              disabled={isReportingSpam || spamReported}
+                            >
+                              {isReportingSpam ? (
+                                <>
+                                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                  Reporting...
+                                </>
+                              ) : (
+                                'Report Issue'
+                              )}
+                            </Button>
+                          </div>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
+                  )}
+                </div>
+              </CardHeader>
+              
+              <CardContent>
+                <p className="text-muted-foreground leading-relaxed">
+                  {issue.description}
+                </p>
+              </CardContent>
+            </Card>
+
+            {/* Issue Images */}
+            {issue.images && issue.images.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Images</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {issue.images.map((image, index) => (
+                      <div key={index} className="aspect-video bg-muted rounded-lg overflow-hidden">
+                        <img
+                          src={`http://localhost:8000${image}`}
+                          alt={`Issue image ${index + 1}`}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.src = '/placeholder-image.jpg';
+                          }}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+
+          {/* Sidebar */}
+          <div className="space-y-6">
+            {/* Location Map */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <MapPin className="w-5 h-5" />
+                  Location
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="aspect-video bg-muted rounded-lg overflow-hidden mb-4">
+                  <Map latitude={issue.latitude} longitude={issue.longitude} />
+                </div>
+                {issue.address && (
+                  <p className="text-sm text-muted-foreground">
+                    {issue.address}
+                  </p>
+                )}
+                <p className="text-xs text-muted-foreground mt-1">
+                  Coordinates: {issue.latitude.toFixed(6)}, {issue.longitude.toFixed(6)}
+                </p>
+              </CardContent>
+            </Card>
+
+            {/* Issue Details */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Issue Details</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
                 <div>
-                  <h1 className="text-3xl font-bold mb-2">{issueData.title}</h1>
-                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                    <span className="flex items-center gap-1">
-                      <User className="w-4 h-4" />
-                      {issueData.reportedBy}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Clock className="w-4 h-4" />
-                      {issueData.reportedDate}
-                    </span>
+                  <Label className="text-sm font-medium">Status</Label>
+                  <div className="mt-1">
+                    <Badge className={getStatusColor(issue.status)}>
+                      {formatStatus(issue.status)}
+                    </Badge>
                   </div>
                 </div>
-                <Button variant="outline" size="sm" className="text-red-600 border-red-200 hover:bg-red-50">
-                  <Flag className="w-4 h-4 mr-1" />
-                  Report Spam
-                </Button>
-              </div>
-
-              {/* Status and Priority */}
-              <div className="flex gap-4 mb-4">
+                
                 <div>
-                  <span className="text-sm font-medium">Status: </span>
-                  <Badge className={getStatusColor(issueData.status)}>
-                    {issueData.status}
-                  </Badge>
+                  <Label className="text-sm font-medium">Category</Label>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {formatCategory(issue.category)}
+                  </p>
                 </div>
+                
                 <div>
-                  <span className="text-sm font-medium">Priority: </span>
-                  <Badge className={getPriorityColor(issueData.priority)}>
-                    {issueData.priority}
-                  </Badge>
+                  <Label className="text-sm font-medium">Reported</Label>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {new Date(issue.created_at).toLocaleDateString()} at{' '}
+                    {new Date(issue.created_at).toLocaleTimeString()}
+                  </p>
                 </div>
+                
                 <div>
-                  <span className="text-sm font-medium">Category: </span>
-                  <Badge variant="secondary">{issueData.category}</Badge>
+                  <Label className="text-sm font-medium">Last Updated</Label>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {new Date(issue.updated_at).toLocaleDateString()} at{' '}
+                    {new Date(issue.updated_at).toLocaleTimeString()}
+                  </p>
                 </div>
-              </div>
-
-              {/* Location */}
-              <div className="flex items-center gap-2 text-sm text-muted-foreground mb-6">
-                <MapPin className="w-4 h-4" />
-                <span>{issueData.location}</span>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {/* Main Content */}
-              <div className="lg:col-span-2 space-y-6">
-                {/* Description */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Description</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-muted-foreground leading-relaxed">
-                      {issueData.description}
+                
+                {issue.flag_count > 0 && (
+                  <div>
+                    <Label className="text-sm font-medium">Community Flags</Label>
+                    <p className="text-sm text-orange-600 mt-1">
+                      This issue has been flagged {issue.flag_count} time{issue.flag_count !== 1 ? 's' : ''} by the community
                     </p>
-                  </CardContent>
-                </Card>
-
-                {/* Images */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Images</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      {issueData.images.map((image, index) => (
-                        <div key={index} className="aspect-video bg-muted rounded-lg flex items-center justify-center">
-                          <img
-                            src={image}
-                            alt={`Issue image ${index + 1}`}
-                            className="w-16 h-16 text-muted-foreground"
-                          />
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Activity Log */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Activity</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      {issueData.activity.map((activity, index) => (
-                        <div key={index}>
-                          <div className="flex justify-between items-start">
-                            <div>
-                              <p className="font-medium">{activity.action}</p>
-                              <p className="text-sm text-muted-foreground">by {activity.user}</p>
-                            </div>
-                            <div className="text-right">
-                              <Badge className={getStatusColor(activity.status)}>
-                                {activity.status}
-                              </Badge>
-                              <p className="text-xs text-muted-foreground mt-1">
-                                {activity.date}
-                              </p>
-                            </div>
-                          </div>
-                          {index < issueData.activity.length - 1 && (
-                            <Separator className="mt-4" />
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* Sidebar */}
-              <div className="space-y-6">
-                {/* Issue Details */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Issue Details</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    <div>
-                      <span className="text-sm font-medium">Issue ID:</span>
-                      <p className="text-sm text-muted-foreground">#{issueData.id}</p>
-                    </div>
-                    <div>
-                      <span className="text-sm font-medium">Reported:</span>
-                      <p className="text-sm text-muted-foreground">{issueData.reportedDate}</p>
-                    </div>
-                    <div>
-                      <span className="text-sm font-medium">Last Updated:</span>
-                      <p className="text-sm text-muted-foreground">{issueData.lastUpdated}</p>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Actions */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Actions</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-2">
-                    <Button className="w-full" variant="outline">
-                      Subscribe to Updates
-                    </Button>
-                    <Button className="w-full" variant="outline">
-                      Share Issue
-                    </Button>
-                    <Button className="w-full bg-primary hover:bg-primary/90">
-                      Report Similar Issue
-                    </Button>
-                  </CardContent>
-                </Card>
-              </div>
-            </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </div>
-        </main>
-      </div>
+        </div>
+      </main>
     </div>
   );
 };

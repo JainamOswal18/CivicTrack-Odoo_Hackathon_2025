@@ -95,10 +95,10 @@ export const authApi = {
     });
   },
 
-  async register(email: string, password: string, username: string): Promise<RegisterResponse> {
+  async register(email: string, password: string, username: string, phone_number?: string): Promise<RegisterResponse> {
     return apiRequest<RegisterResponse>('/auth/register', {
       method: 'POST',
-      body: JSON.stringify({ email, password, username }),
+      body: JSON.stringify({ email, password, username, phone_number }),
     });
   },
 };
@@ -197,11 +197,89 @@ export const issuesApi = {
     }
   },
 
+  async getIssueById(issueId: string) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/issues/${issueId}`);
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new ApiError(data.error || 'Failed to fetch issue');
+      }
+      
+      return data;
+    } catch (error) {
+      if (error instanceof ApiError) {
+        throw error;
+      }
+      throw new ApiError('Network error occurred while fetching issue');
+    }
+  },
+
   async flagIssue(issueId: number, reason?: string) {
     return apiRequest(`/issues/${issueId}/flag`, {
       method: 'POST',
       body: JSON.stringify({ reason }),
     });
   },
+};
+
+// Admin API method types
+export interface AdminUser {
+  id: number;
+  email: string;
+  username: string;
+  is_banned: boolean;
+  created_at: string;
+}
+
+export interface AdminFlaggedIssue {
+  id: number;
+  title: string;
+  description: string;
+  category: string;
+  status: string;
+  latitude: number;
+  longitude: number;
+  flag_count: number;
+  is_flagged: boolean;
+  created_at: string;
+  updated_at: string;
+  images: string[];
+  reporter: string;
+}
+
+export interface AdminAnalytics {
+  totalUsers: number;
+  totalIssues: number;
+  byCategory: { category: string; count: number }[];
+  byStatus: { status: string; count: number }[];
+}
+
+// Admin API methods
+export const adminApi = {
+  async getUsers(): Promise<{ users: AdminUser[] }> {
+    return apiRequest('/admin/users') as Promise<{ users: AdminUser[] }>;
+  },
+
+  async banUser(userId: string, banned: boolean): Promise<{ message: string }> {
+    return apiRequest(`/admin/users/${userId}/ban`, {
+      method: 'POST',
+      body: JSON.stringify({ banned }),
+    }) as Promise<{ message: string }>;
+  },
+
+  async getFlaggedIssues(): Promise<{ flaggedIssues: AdminFlaggedIssue[] }> {
+    return apiRequest('/admin/flags/issues') as Promise<{ flaggedIssues: AdminFlaggedIssue[] }>;
+  },
+
+  async unflagIssue(issueId: string): Promise<{ message: string }> {
+    return apiRequest(`/admin/flags/issues/${issueId}/unflag`, {
+      method: 'POST',
+    }) as Promise<{ message: string }>;
+  },
+
+  async getAnalytics(): Promise<{ analytics: AdminAnalytics }> {
+    return apiRequest('/admin/analytics') as Promise<{ analytics: AdminAnalytics }>;
+  }
 };
 

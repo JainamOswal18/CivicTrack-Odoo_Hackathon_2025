@@ -22,7 +22,8 @@ const initializeTables = () => {
       username TEXT UNIQUE,
       is_verified BOOLEAN DEFAULT FALSE,
       is_banned BOOLEAN DEFAULT FALSE,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      phone_number TEXT
     );
 
     CREATE TABLE IF NOT EXISTS issues (

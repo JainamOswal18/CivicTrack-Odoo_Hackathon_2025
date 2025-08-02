@@ -8,6 +8,7 @@ import { MapPin, Clock, Eye, Loader2, AlertCircle, User, LogOut } from "lucide-r
 import { Link, useNavigate } from "react-router-dom";
 import { issuesApi } from "../services/api";
 import Map from '../components/Map';
+import { IssuesMap } from '../components/IssuesMap';
 import { useAuth } from "../contexts/AuthContext"
 
 interface Issue {
@@ -256,25 +257,30 @@ const HomePage = () => {
                   Browse Issues
                                 </Button>
                             </Link>
-                            {isAuthenticated ? (
-                                <>
-                                    <div className="flex items-center gap-2 px-3 py-1 bg-primary/10 rounded-full">
-                                        <User className="w-4 h-4 text-primary" />
-                                        <span className="text-sm font-medium text-primary">
-                                            {user?.username || user?.email}
-                                        </span>
-                                    </div>
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={handleLogout}
-                                        className="flex items-center gap-2"
-                                    >
-                                        <LogOut className="w-4 h-4" />
-                                        Logout
-                                    </Button>
-                                </>
-                            ) : (
+                                        {isAuthenticated ? (
+                <>
+                    <Link to="/admin">
+                        <Button variant="ghost" size="sm">
+                          Admin
+                        </Button>
+                    </Link>
+                    <div className="flex items-center gap-2 px-3 py-1 bg-primary/10 rounded-full">
+                        <User className="w-4 h-4 text-primary" />
+                        <span className="text-sm font-medium text-primary">
+                            {user?.username || user?.email}
+                        </span>
+                    </div>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleLogout}
+                        className="flex items-center gap-2"
+                    >
+                        <LogOut className="w-4 h-4" />
+                        Logout
+                    </Button>
+                </>
+            ) : (
                                 <>
                                     <Link to="/register">
                                         <Button variant="ghost" size="sm">
@@ -350,6 +356,28 @@ const HomePage = () => {
                             {locationError}. Using default location (Delhi). You can still browse issues.
                         </AlertDescription>
                     </Alert>
+                )}
+
+                {/* Issues Map Section */}
+                {!isLoading && userLocation && issues.length > 0 && (
+                    <div className="mb-8">
+                        <div className="text-center mb-6">
+                            <h3 className="text-2xl font-bold text-foreground mb-2">
+                                Issues Near You
+                            </h3>
+                            <p className="text-muted-foreground">
+                                Explore civic issues in your area on the interactive map
+                            </p>
+                        </div>
+                        <div className="h-96 w-full">
+                            <IssuesMap
+                                issues={issues}
+                                center={[userLocation.lat, userLocation.lng]}
+                                hasNewData={false}
+                                className="border border-border"
+                            />
+                        </div>
+                    </div>
                 )}
 
         {/* Search Filters */}
@@ -463,7 +491,7 @@ const HomePage = () => {
                 <div className="relative w-full h-32 bg-gradient-to-br from-muted to-muted/50 rounded-lg mb-4 overflow-hidden group-hover:scale-105 transition-transform duration-300">
                                             {issue.images && issue.images.length > 0 ? (
                                                 <img
-                                                    src={`http://localhost:8000/uploads/${issue.images[0]}`}
+                                                    src={`http://localhost:8000${issue.images[0]}`}
                                                     alt={issue.title}
                                                     className="w-full h-full object-cover"
                                                     onError={(e) => {
@@ -514,7 +542,7 @@ const HomePage = () => {
                                                 {formatStatus(issue.status)}
                   </Badge>
                   
-                  <Link to={`/issue/${issue.id}`}>
+                                            <Link to={`/issues/${issue.id}`}>
                     <Button variant="ghost" size="sm" className="text-primary hover:text-primary/80 opacity-0 group-hover:opacity-100 transition-opacity">
                       <Eye className="w-4 h-4 mr-1" />
                       View Details

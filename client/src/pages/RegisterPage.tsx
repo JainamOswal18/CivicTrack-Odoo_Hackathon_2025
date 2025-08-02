@@ -11,7 +11,8 @@ const RegisterPage = () => {
   const [formData, setFormData] = useState({
     username: "",
     email: "",
-    password: ""
+    password: "",
+    phone_number: ""
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
@@ -30,14 +31,26 @@ const RegisterPage = () => {
     }));
   };
 
+  // Phone number validation function
+  const validatePhoneNumber = (phone: string): boolean => {
+    if (!phone) return true; // Optional field
+    const phoneRegex = /^[\+]?[1-9][\d]{0,15}$/;
+    return phoneRegex.test(phone.replace(/[\s\-\(\)]/g, ''));
+  };
+
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.username || !formData.email || !formData.password) return;
 
+    // Validate phone number if provided
+    if (formData.phone_number && !validatePhoneNumber(formData.phone_number)) {
+      return; // Form validation will show error
+    }
+
     try {
       setIsSubmitting(true);
       clearError();
-      await register(formData.email, formData.password, formData.username);
+      await register(formData.email, formData.password, formData.username, formData.phone_number || undefined);
       navigate('/');
     } catch (error) {
       // Error is handled by the context
@@ -94,6 +107,27 @@ const RegisterPage = () => {
               />
             </div>
 
+               <div className="space-y-2">
+              <Label htmlFor="phone_number">Phone Number</Label>
+              <Input
+                id="phone_number"
+                type="tel"
+                value={formData.phone_number}
+                onChange={handleChange}
+                placeholder="Enter phone number (e.g., +1234567890)"
+                pattern="[\+]?[1-9][\d]{0,15}"
+                className={formData.phone_number && !validatePhoneNumber(formData.phone_number) ? "border-red-500" : ""}
+              />
+              <p className="text-xs text-muted-foreground">
+                Format: +1234567890 or 1234567890 (10-16 digits)
+              </p>
+              {formData.phone_number && !validatePhoneNumber(formData.phone_number) && (
+                <p className="text-xs text-red-500">
+                  Please enter a valid phone number (10-16 digits, optional + prefix)
+                </p>
+              )}
+            </div>
+
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
               <Input
@@ -108,6 +142,8 @@ const RegisterPage = () => {
               <p className="text-xs text-muted-foreground">Password must be at least 8 characters long</p>
             </div>
 
+         
+
             <div className="text-center">
               <p className="text-sm text-muted-foreground">
                 Already have an account?{" "}
@@ -119,7 +155,13 @@ const RegisterPage = () => {
 
             <Button 
               type="submit" 
-              disabled={isSubmitting || !formData.username || !formData.email || !formData.password}
+              disabled={
+                isSubmitting || 
+                !formData.username || 
+                !formData.email || 
+                !formData.password ||
+                (formData.phone_number && !validatePhoneNumber(formData.phone_number))
+              }
               className="w-full bg-primary hover:bg-primary/90 disabled:opacity-50"
             >
               {isSubmitting ? "Creating Account..." : "Register"}

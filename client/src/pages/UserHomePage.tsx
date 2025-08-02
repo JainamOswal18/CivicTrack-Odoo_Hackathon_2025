@@ -207,7 +207,7 @@ const UserHomePage = () => {
                       {issue.status}
                     </Badge>
                     
-                    <Link to={`/issue/${issue.id}`}>
+                                              <Link to={`/issues/${issue.id}`}>
                       <Button variant="ghost" size="sm" className="text-primary hover:text-primary/80">
                         <Eye className="w-4 h-4 mr-1" />
                         View Details

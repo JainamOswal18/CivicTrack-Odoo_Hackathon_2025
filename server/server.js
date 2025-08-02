@@ -32,7 +32,10 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(express.json({limit: "10mb"}));
 app.use(express.urlencoded({ extended: true }));
-app.use(helmet()); // Security middleware to set various HTTP headers
+// Security middleware with relaxed cross-origin policy for images
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" }
+}));
 
 // Routes
 
@@ -42,8 +45,16 @@ const limiter = rateLimit({
 });
 app.use(limiter);
 
-// Static files for uploaded images
-app.use('/uploads', express.static('uploads'));
+// Static files for uploaded images with explicit CORS
+app.use('/uploads', (req, res, next) => {
+  const origin = req.headers.origin;
+  if (corsOptions.origin.includes(origin)) {
+    res.header('Access-Control-Allow-Origin', origin);
+  }
+  res.header('Access-Control-Allow-Methods', 'GET');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+  next();
+}, express.static('uploads'));
 
 
 app.use("/api/auth", authRoutes);

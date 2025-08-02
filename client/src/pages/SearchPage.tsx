@@ -234,6 +234,11 @@ const SearchPage = () => {
               </Link>
               {isAuthenticated ? (
                 <>
+                  <Link to="/admin">
+                    <Button variant="ghost" size="sm">
+                      Admin
+                    </Button>
+                  </Link>
                   <div className="flex items-center gap-2 px-3 py-1 bg-primary/10 rounded-full">
                     <User className="w-4 h-4 text-primary" />
                     <span className="text-sm font-medium text-primary">
@@ -531,7 +536,7 @@ const SearchPage = () => {
                       {formatStatus(issue.status)}
                     </Badge>
                     
-                    <Link to={`/issue/${issue.id}`}>
+                                              <Link to={`/issues/${issue.id}`}>
                       <Button variant="ghost" size="sm" className="text-primary hover:text-primary/80">
                         <Eye className="w-4 h-4 mr-1" />
                         View more information
