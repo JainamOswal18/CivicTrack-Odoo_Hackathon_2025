@@ -4,10 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { MapPin, Clock, Eye, Loader2, AlertCircle } from "lucide-react";
+import { MapPin, Clock, Eye, Loader2, AlertCircle, User, LogOut } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { issuesApi } from "../services/api";
-import { Map } from '../components/Map';
+import Map from '../components/Map';
 import { useAuth } from "../contexts/AuthContext"
 
 interface Issue {
@@ -55,12 +55,12 @@ const HomePage = () => {
         );
     }
 
-    const issueCategories = [
-        "Roads", "Lighting", "Water Supply", "Cleanliness", "Public Safety", "Obstructions"
-    ];
+  const issueCategories = [
+    "Roads", "Lighting", "Water Supply", "Cleanliness", "Public Safety", "Obstructions"
+  ];
 
-    const issueStatuses = ["Reported", "In Progress", "Resolved"];
-    const distances = ["1 km", "3 km", "5 km"];
+  const issueStatuses = ["Reported", "In Progress", "Resolved"];
+  const distances = ["1 km", "3 km", "5 km"];
 
     // Get user's current location
     const getCurrentLocation = (): Promise<{ lat: number; lng: number }> => {
@@ -192,14 +192,14 @@ const HomePage = () => {
         await fetchIssues(userLocation.lat, userLocation.lng, radius, category, status);
     };
 
-    const getStatusColor = (status: string) => {
+  const getStatusColor = (status: string) => {
         switch (status.toLowerCase()) {
             case "reported": return "bg-red-100 text-red-800";
             case "in_progress": return "bg-yellow-100 text-yellow-800";
             case "resolved": return "bg-green-100 text-green-800";
-            default: return "bg-gray-100 text-gray-800";
-        }
-    };
+      default: return "bg-gray-100 text-gray-800";
+    }
+  };
 
     const formatStatus = (status: string) => {
         switch (status.toLowerCase()) {
@@ -235,25 +235,25 @@ const HomePage = () => {
             return `${diffInHours} hour${diffInHours > 1 ? 's' : ''} ago`;
         } else {
             return 'Just now';
-        }
-    };
+    }
+  };
 
-    return (
-        <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/10">
-            {/* Header */}
-            <header className="bg-card/80 backdrop-blur-sm border-b sticky top-0 z-40">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="flex justify-between items-center h-16">
-                        <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                                <span className="text-primary-foreground font-bold text-sm">CT</span>
-                            </div>
-                            <h1 className="text-2xl font-bold text-primary">CivicTrack</h1>
-                        </div>
-                        <div className="flex items-center gap-3">
-                            <Link to="/search">
-                                <Button variant="ghost" size="sm">
-                                    Browse Issues
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/10">
+      {/* Header */}
+      <header className="bg-card/80 backdrop-blur-sm border-b sticky top-0 z-40">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+                <span className="text-primary-foreground font-bold text-sm">CT</span>
+              </div>
+              <h1 className="text-2xl font-bold text-primary">CivicTrack</h1>
+            </div>
+            <div className="flex items-center gap-3">
+              <Link to="/search">
+                <Button variant="ghost" size="sm">
+                  Browse Issues
                                 </Button>
                             </Link>
                             {isAuthenticated ? (
@@ -279,24 +279,24 @@ const HomePage = () => {
                                     <Link to="/register">
                                         <Button variant="ghost" size="sm">
                                             Register
-                                        </Button>
-                                    </Link>
-                                    <Link to="/login">
-                                        <Button variant="gradient" size="sm">
-                                            Login
-                                        </Button>
-                                    </Link>
+                </Button>
+              </Link>
+              <Link to="/login">
+                <Button variant="gradient" size="sm">
+                  Login
+                </Button>
+              </Link>
                                 </>
                             )}
-                        </div>
-                    </div>
-                </div>
-            </header>
+            </div>
+          </div>
+        </div>
+      </header>
 
-            {/* Main Content */}
-            <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                {/* Hero Section */}
-                <div className="text-center mb-12 fade-in">
+      {/* Main Content */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Hero Section */}
+        <div className="text-center mb-12 fade-in">
                     {isAuthenticated ? (
                         <>
                             <h2 className="text-4xl md:text-5xl font-bold text-balance mb-4 bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
@@ -320,27 +320,27 @@ const HomePage = () => {
                         </>
                     ) : (
                         <>
-                            <h2 className="text-4xl md:text-5xl font-bold text-balance mb-4 bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-                                Report Local Issues,
-                                <br />
-                                Build Better Communities
-                            </h2>
-                            <p className="text-xl text-muted-foreground mb-6 max-w-2xl mx-auto text-balance">
-                                Discover and report civic issues in your neighborhood. Track progress and engage with your local community.
-                            </p>
-                            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+          <h2 className="text-4xl md:text-5xl font-bold text-balance mb-4 bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+            Report Local Issues,
+            <br />
+            Build Better Communities
+          </h2>
+          <p className="text-xl text-muted-foreground mb-6 max-w-2xl mx-auto text-balance">
+            Discover and report civic issues in your neighborhood. Track progress and engage with your local community.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
                                 <Link to="/login">
-                                    <Button size="xl" variant="gradient" className="floating-element">
+              <Button size="xl" variant="gradient" className="floating-element">
                                         Get Started
-                                    </Button>
-                                </Link>
-                                <p className="text-sm text-muted-foreground">
+              </Button>
+            </Link>
+            <p className="text-sm text-muted-foreground">
                                     Browse nearby issues without logging in
-                                </p>
-                            </div>
+            </p>
+          </div>
                         </>
                     )}
-                </div>
+        </div>
 
                 {/* Location Status */}
                 {locationError && (
@@ -352,57 +352,57 @@ const HomePage = () => {
                     </Alert>
                 )}
 
-                {/* Search Filters */}
-                <div className="flex flex-wrap gap-4 mb-8 justify-center">
+        {/* Search Filters */}
+        <div className="flex flex-wrap gap-4 mb-8 justify-center">
                     <Select
                         value={selectedCategory}
                         onValueChange={setSelectedCategory}
                     >
-                        <SelectTrigger className="w-40">
-                            <SelectValue placeholder="Categories" />
-                        </SelectTrigger>
-                        <SelectContent>
+            <SelectTrigger className="w-40">
+              <SelectValue placeholder="Categories" />
+            </SelectTrigger>
+            <SelectContent>
                             <SelectItem value="all">All Categories</SelectItem>
-                            {issueCategories.map((category) => (
-                                <SelectItem key={category} value={category}>
-                                    {category}
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
+              {issueCategories.map((category) => (
+                <SelectItem key={category} value={category}>
+                  {category}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
 
                     <Select
                         value={selectedStatus}
                         onValueChange={setSelectedStatus}
                     >
-                        <SelectTrigger className="w-40">
-                            <SelectValue placeholder="Status" />
-                        </SelectTrigger>
-                        <SelectContent>
+            <SelectTrigger className="w-40">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
                             <SelectItem value="all">All Status</SelectItem>
-                            {issueStatuses.map((status) => (
-                                <SelectItem key={status} value={status}>
-                                    {status}
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
+              {issueStatuses.map((status) => (
+                <SelectItem key={status} value={status}>
+                  {status}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
 
                     <Select
                         value={selectedDistance}
                         onValueChange={setSelectedDistance}
                     >
-                        <SelectTrigger className="w-40">
-                            <SelectValue placeholder="Distance" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {distances.map((distance) => (
+            <SelectTrigger className="w-40">
+              <SelectValue placeholder="Distance" />
+            </SelectTrigger>
+            <SelectContent>
+              {distances.map((distance) => (
                                 <SelectItem key={distance} value={distance.split(' ')[0]}>
-                                    {distance}
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
+                  {distance}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
 
                     <Button
                         onClick={handleFilterChange}
@@ -417,8 +417,8 @@ const HomePage = () => {
                         ) : (
                             'Search Issues'
                         )}
-                    </Button>
-                </div>
+          </Button>
+        </div>
 
                 {/* Error Alert */}
                 {error && (
@@ -438,29 +438,29 @@ const HomePage = () => {
                     </div>
                 )}
 
-                {/* Issues Grid */}
+        {/* Issues Grid */}
                 {!isLoading && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
                         {issues.length > 0 ? (
                             issues.map((issue, index) => (
-                                <Card
-                                    key={issue.id}
+            <Card 
+              key={issue.id} 
                                     className="group cursor-pointer border-l-4 border-l-primary/20 slide-up hover:border-l-primary/50 transition-colors"
-                                    style={{ animationDelay: `${index * 0.1}s` }}
-                                >
-                                    <CardContent className="p-4">
+              style={{ animationDelay: `${index * 0.1}s` }}
+            >
+              <CardContent className="p-4">
                                         {/* Category & Distance */}
-                                        <div className="flex justify-between items-start mb-4">
-                                            <Badge variant="secondary" className="text-xs">
+                <div className="flex justify-between items-start mb-4">
+                  <Badge variant="secondary" className="text-xs">
                                                 {formatCategory(issue.category)}
-                                            </Badge>
+                  </Badge>
                                             <Badge variant="outline" className="text-xs">
                                                 {issue.distance.toFixed(1)} km
-                                            </Badge>
-                                        </div>
+                  </Badge>
+                </div>
 
                                         {/* Issue Image or Map */}
-                                        <div className="relative w-full h-32 bg-gradient-to-br from-muted to-muted/50 rounded-lg mb-4 overflow-hidden group-hover:scale-105 transition-transform duration-300">
+                <div className="relative w-full h-32 bg-gradient-to-br from-muted to-muted/50 rounded-lg mb-4 overflow-hidden group-hover:scale-105 transition-transform duration-300">
                                             {issue.images && issue.images.length > 0 ? (
                                                 <img
                                                     src={`http://localhost:8000/uploads/${issue.images[0]}`}
@@ -483,46 +483,46 @@ const HomePage = () => {
                                                     latitude={issue.latitude}
                                                     longitude={issue.longitude}
                                                 />
-                                            </div>
-                                        </div>
+                  </div>
+                </div>
 
-                                        {/* Issue Title */}
-                                        <h3 className="font-semibold text-card-foreground mb-2 group-hover:text-primary transition-colors line-clamp-2">
-                                            {issue.title}
-                                        </h3>
+                {/* Issue Title */}
+                <h3 className="font-semibold text-card-foreground mb-2 group-hover:text-primary transition-colors line-clamp-2">
+                  {issue.title}
+                </h3>
 
-                                        {/* Issue Description */}
-                                        <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
-                                            {issue.description}
-                                        </p>
+                {/* Issue Description */}
+                <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
+                  {issue.description}
+                </p>
 
-                                        {/* Meta Information */}
-                                        <div className="flex items-center justify-between text-xs text-muted-foreground mb-4">
-                                            <div className="flex items-center gap-1">
-                                                <MapPin className="w-3 h-3" />
+                {/* Meta Information */}
+                <div className="flex items-center justify-between text-xs text-muted-foreground mb-4">
+                  <div className="flex items-center gap-1">
+                    <MapPin className="w-3 h-3" />
                                                 <span>{issue.address || `${issue.latitude.toFixed(4)}, ${issue.longitude.toFixed(4)}`}</span>
-                                            </div>
-                                            <div className="flex items-center gap-1">
-                                                <Clock className="w-3 h-3" />
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Clock className="w-3 h-3" />
                                                 <span>{formatTimeAgo(issue.created_at)}</span>
-                                            </div>
-                                        </div>
+                  </div>
+                </div>
 
-                                        {/* Status and Action */}
-                                        <div className="flex items-center justify-between">
-                                            <Badge className={getStatusColor(issue.status)}>
+                {/* Status and Action */}
+                <div className="flex items-center justify-between">
+                  <Badge className={getStatusColor(issue.status)}>
                                                 {formatStatus(issue.status)}
-                                            </Badge>
-
-                                            <Link to={`/issue/${issue.id}`}>
-                                                <Button variant="ghost" size="sm" className="text-primary hover:text-primary/80 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                    <Eye className="w-4 h-4 mr-1" />
-                                                    View Details
-                                                </Button>
-                                            </Link>
-                                        </div>
-                                    </CardContent>
-                                </Card>
+                  </Badge>
+                  
+                  <Link to={`/issue/${issue.id}`}>
+                    <Button variant="ghost" size="sm" className="text-primary hover:text-primary/80 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Eye className="w-4 h-4 mr-1" />
+                      View Details
+                    </Button>
+                  </Link>
+                </div>
+              </CardContent>
+            </Card>
                             ))
                         ) : (
                             <div className="col-span-full text-center py-12">
@@ -546,46 +546,46 @@ const HomePage = () => {
                                 </div>
                             </div>
                         )}
-                    </div>
+        </div>
                 )}
 
-                {/* Stats Section */}
+        {/* Stats Section */}
                 {!isLoading && issues.length > 0 && (
-                    <div className="bg-gradient-to-r from-primary/5 to-accent/5 rounded-xl p-8 mb-12 fade-in">
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                            <div className="text-center">
+        <div className="bg-gradient-to-r from-primary/5 to-accent/5 rounded-xl p-8 mb-12 fade-in">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="text-center">
                                 <div className="text-3xl font-bold text-primary mb-2">
                                     {issues.length}
                                 </div>
                                 <div className="text-sm text-muted-foreground">Issues Found</div>
-                            </div>
-                            <div className="text-center">
+            </div>
+            <div className="text-center">
                                 <div className="text-3xl font-bold text-green-600 mb-2">
                                     {issues.filter(issue => issue.status.toLowerCase() === 'resolved').length}
                                 </div>
                                 <div className="text-sm text-muted-foreground">Resolved</div>
-                            </div>
-                            <div className="text-center">
+            </div>
+            <div className="text-center">
                                 <div className="text-3xl font-bold text-yellow-600 mb-2">
                                     {issues.filter(issue => issue.status.toLowerCase() === 'in_progress').length}
                                 </div>
-                                <div className="text-sm text-muted-foreground">In Progress</div>
-                            </div>
-                        </div>
-                    </div>
+              <div className="text-sm text-muted-foreground">In Progress</div>
+            </div>
+          </div>
+        </div>
                 )}
 
-                {/* Pagination */}
-                <div className="flex justify-center">
-                    <div className="flex space-x-2">
-                        <div className="w-2 h-2 bg-primary rounded-full"></div>
-                        <div className="w-2 h-2 bg-muted rounded-full"></div>
-                        <div className="w-2 h-2 bg-muted rounded-full"></div>
-                    </div>
-                </div>
-            </main>
+        {/* Pagination */}
+        <div className="flex justify-center">
+          <div className="flex space-x-2">
+            <div className="w-2 h-2 bg-primary rounded-full"></div>
+            <div className="w-2 h-2 bg-muted rounded-full"></div>
+            <div className="w-2 h-2 bg-muted rounded-full"></div>
+          </div>
         </div>
-    );
+      </main>
+    </div>
+  );
 };
 
 export default HomePage;
