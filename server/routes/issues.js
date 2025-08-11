@@ -59,98 +59,110 @@ const calculateDistance = (lat1, lon1, lat2, lon2) => {
 };
 
 // Create new issue
-router.post("/", authMiddleware, upload.array("images", 5), [
-
+router.post(
+  "/",
+  authMiddleware,
+  upload.array("images", 5),
+  [
     body("title").trim().isLength({ min: 5, max: 100 }),
     body("description").trim().isLength({ min: 10, max: 500 }),
     body("category").isIn([
-        "roads",
-        "lighting",
-        "water",
-        "cleanliness",
-        "safety",
-        "obstructions",
+      "roads",
+      "lighting",
+      "water",
+      "cleanliness",
+      "safety",
+      "obstructions",
     ]),
     body("latitude").isFloat({ min: -90, max: 90 }),
     body("longitude").isFloat({ min: -180, max: 180 }),
-    body("is_anonymous").optional().isBoolean(),
-
-], (req, res) => {
+    body("is_anonymous").optional().isIn(["true", "false"]).toBoolean(),
+  ],
+  (req, res) => {
     try {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return res.status(400).json({ errors: errors.array() });
-        }
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+      }
 
-        const { title, description, category, latitude, longitude, address, is_anonymous } = req.body;
+      const {
+        title,
+        description,
+        category,
+        latitude,
+        longitude,
+        address,
+        is_anonymous,
+      } = req.body;
 
-        const reporterId =
-            req.body.is_anonymous === "true" ? null : req.user.userId;
+      const reporterId =
+        req.body.is_anonymous === true ? null : req.user.userId;
 
-        db.run(
-            `INSERT INTO issues (title, description, category, latitude, longitude, address, reporter_id, is_anonymous) 
+      db.run(
+        `INSERT INTO issues (title, description, category, latitude, longitude, address, reporter_id, is_anonymous) 
        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-            [
-                title,
-                description,
-                category,
-                parseFloat(latitude),
-                parseFloat(longitude),
-                address,
-                reporterId,
-                is_anonymous === "true",
-            ],
-            function (err) {
-                if (err) {
-                    console.error("Error creating issue:", err);
-                    return res.status(500).json({ error: "Failed to create issue" });
-                }
+        [
+          title,
+          description,
+          category,
+          parseFloat(latitude),
+          parseFloat(longitude),
+          address,
+          reporterId,
+          is_anonymous === true,
+        ],
+        function (err) {
+          if (err) {
+            console.error("Error creating issue:", err);
+            return res.status(500).json({ error: "Failed to create issue" });
+          }
 
-                const issueId = this.lastID;
+          const issueId = this.lastID;
 
-                // Save uploaded images
-                if (req.files && req.files.length > 0) {
-                    const imageInsertPromises = req.files.map((file) => {
-                        return new Promise((resolve, reject) => {
-                            db.run(
-                                "INSERT INTO issue_images (issue_id, filename, file_path) VALUES (?, ?, ?)",
-                                [issueId, file.filename, file.path],
-                                (err) => {
-                                    if (err) reject(err);
-                                    else resolve();
-                                }
-                            );
-                        });
-                    });
+          // Save uploaded images
+          if (req.files && req.files.length > 0) {
+            const imageInsertPromises = req.files.map((file) => {
+              return new Promise((resolve, reject) => {
+                db.run(
+                  "INSERT INTO issue_images (issue_id, filename, file_path) VALUES (?, ?, ?)",
+                  [issueId, file.filename, file.path],
+                  (err) => {
+                    if (err) reject(err);
+                    else resolve();
+                  }
+                );
+              });
+            });
 
-                    Promise.all(imageInsertPromises)
-                        .then(() => {
-                            res.status(201).json({
-                                message: "Issue created successfully",
-                                issueId,
-                                imageCount: req.files.length,
-                            });
-                        })
-                        .catch((err) => {
-                            console.error("Error saving images:", err);
-                            res.status(201).json({
-                                message: "Issue created but some images failed to upload",
-                                issueId,
-                            });
-                        });
-                } else {
-                    res.status(201).json({
-                        message: "Issue created successfully",
-                        issueId,
-                    });
-                }
-            }
-        );
+            Promise.all(imageInsertPromises)
+              .then(() => {
+                res.status(201).json({
+                  message: "Issue created successfully",
+                  issueId,
+                  imageCount: req.files.length,
+                });
+              })
+              .catch((err) => {
+                console.error("Error saving images:", err);
+                res.status(201).json({
+                  message: "Issue created but some images failed to upload",
+                  issueId,
+                });
+              });
+          } else {
+            res.status(201).json({
+              message: "Issue created successfully",
+              issueId,
+            });
+          }
+        }
+      );
     } catch (error) {
-        console.error("Server error:", error);
-        res.status(500).json({ error: "Server error" });
+      console.error("Server error:", error);
+      res.status(500).json({ error: "Server error" });
     }
-});
+  }
+);
 
 // Get nearby issues
 router.get(

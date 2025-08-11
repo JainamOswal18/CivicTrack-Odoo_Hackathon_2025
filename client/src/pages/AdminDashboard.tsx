@@ -499,43 +499,32 @@ const AdminDashboard: React.FC = () => {
                   Review and moderate flagged content
                 </CardDescription>
               </CardHeader>
-              <CardContent className="relative p-6">
+              <CardContent>
                 {flaggedLoading ? (
-                  <div className="flex justify-center py-12">
-                    <div className="text-center">
-                      <Loader2 className="w-12 h-12 animate-spin text-amber-500 mx-auto mb-4" />
-                      <p className="text-slate-600">Loading flagged issues...</p>
-                    </div>
+                  <div className="flex justify-center py-8">
+                    <Loader2 className="w-8 h-8 animate-spin text-primary" />
                   </div>
                 ) : flaggedError ? (
-                  <Alert className="border-red-200 bg-red-50">
-                    <AlertTriangle className="h-5 w-5 text-red-600" />
-                    <AlertDescription className="text-red-700">{flaggedError}</AlertDescription>
+                  <Alert>
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertDescription>{flaggedError}</AlertDescription>
                   </Alert>
                 ) : flaggedIssues.length === 0 ? (
-                  <div className="text-center py-16">
-                    <div className="relative">
-                      <div className="absolute inset-0 bg-gradient-to-r from-green-500/10 to-emerald-500/10 rounded-full blur-3xl"></div>
-                      <CheckCircle className="relative w-20 h-20 text-green-500 mx-auto mb-6" />
-                    </div>
-                    <h3 className="text-2xl font-bold text-slate-800 mb-3">No Flagged Issues</h3>
-                    <p className="text-slate-600 text-lg">All issues are currently clean and compliant!</p>
+                  <div className="text-center py-8">
+                    <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-foreground mb-2">No Flagged Issues</h3>
+                    <p className="text-muted-foreground">All issues are currently clean!</p>
                   </div>
                 ) : (
                   <div className="space-y-6">
-                    {flaggedIssues.map((issue, index) => (
-                      <div 
-                        key={issue.id} 
-                        className="group relative overflow-hidden bg-gradient-to-r from-white to-red-50 border border-red-200 rounded-2xl p-8 hover:shadow-xl hover:border-red-300 transition-all duration-300"
-                        style={{animationDelay: `${index * 0.1}s`}}
-                      >
-                        <div className="absolute inset-0 bg-gradient-to-r from-red-500/0 to-amber-500/0 group-hover:from-red-500/5 group-hover:to-amber-500/5 transition-all duration-300"></div>
-                        <div className="relative flex items-start justify-between">
+                    {flaggedIssues.map((issue) => (
+                      <div key={issue.id} className="border rounded-lg p-6 space-y-4">
+                        <div className="flex items-start justify-between">
                           <div className="flex-1">
-                            <div className="flex items-center gap-3 mb-4">
-                              <h3 className="text-xl font-bold text-slate-800 group-hover:text-red-700 transition-colors">{issue.title}</h3>
-                              <Badge className="bg-red-100 text-red-800 border-red-200 flex items-center gap-2 px-3 py-1 font-bold">
-                                <Flag className="w-4 h-4" />
+                            <div className="flex items-center gap-2 mb-2">
+                              <h3 className="text-lg font-semibold text-foreground">{issue.title}</h3>
+                              <Badge variant="destructive" className="flex items-center gap-1">
+                                <Flag className="w-3 h-3" />
                                 {issue.flag_count} flags
                               </Badge>
                             </div>
@@ -597,22 +586,22 @@ const AdminDashboard: React.FC = () => {
                             </div>
                           </div>
                           
-                          <div className="flex-shrink-0 ml-6">
+                          <div className="flex-shrink-0 ml-4">
                             <Button
                               variant="outline"
                               onClick={() => handleUnflagIssue(issue.id)}
                               disabled={unflaggingIssues.has(issue.id)}
-                              className="bg-green-500 hover:bg-green-600 text-white border-green-500 hover:border-green-600 font-medium px-6 py-3 transition-all duration-200 hover:scale-105 flex items-center gap-2"
+                              className="flex items-center gap-2"
                             >
                               {unflaggingIssues.has(issue.id) ? (
                                 <>
-                                  <Loader2 className="w-5 h-5 animate-spin" />
-                                  Processing...
+                                  <Loader2 className="w-4 h-4 animate-spin" />
+                                  Unflagging...
                                 </>
                               ) : (
                                 <>
-                                  <CheckCircle className="w-5 h-5" />
-                                  Approve & Unflag
+                                  <CheckCircle className="w-4 h-4" />
+                                  Unflag Issue
                                 </>
                               )}
                             </Button>
@@ -627,128 +616,87 @@ const AdminDashboard: React.FC = () => {
           </TabsContent>
 
           {/* Overview Tab */}
-          <TabsContent value="overview" className="space-y-8">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              <Card className="relative overflow-hidden bg-white/70 backdrop-blur-sm border-0 shadow-xl hover:shadow-2xl transition-all duration-300">
-                <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-pink-500/5"></div>
-                <CardHeader className="relative border-b border-slate-100 bg-gradient-to-r from-purple-50 to-pink-50">
-                  <CardTitle className="flex items-center gap-3 text-xl font-bold text-slate-800">
-                    <div className="p-2 bg-purple-500/10 rounded-xl">
-                      <Activity className="w-6 h-6 text-purple-600" />
-                    </div>
-                    Recent Activity
-                  </CardTitle>
-                  <CardDescription className="text-slate-600 text-base">Latest platform activity and system status</CardDescription>
+          <TabsContent value="overview" className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Recent Activity</CardTitle>
+                  <CardDescription>Latest platform activity</CardDescription>
                 </CardHeader>
-                <CardContent className="relative p-6">
-                  <div className="space-y-6">
-                    <div className="group flex items-center gap-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl hover:from-blue-100 hover:to-indigo-100 transition-all duration-300 border border-blue-200">
-                      <div className="p-3 bg-blue-500/10 rounded-xl group-hover:bg-blue-500/20 transition-colors duration-300">
-                        <Users className="w-6 h-6 text-blue-600" />
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg">
+                      <Users className="w-5 h-5 text-blue-600" />
+                      <div>
+                        <p className="font-medium text-blue-900">New User Registrations</p>
+                        <p className="text-sm text-blue-600">{users.length} total users</p>
                       </div>
-                      <div className="flex-1">
-                        <p className="font-bold text-blue-900 text-lg">User Registrations</p>
-                        <p className="text-blue-700 font-medium">{users.length} total registered users</p>
-                      </div>
-                      <div className="text-2xl font-bold text-blue-600">{users.length}</div>
                     </div>
                     
-                    <div className="group flex items-center gap-4 p-4 bg-gradient-to-r from-amber-50 to-orange-50 rounded-2xl hover:from-amber-100 hover:to-orange-100 transition-all duration-300 border border-amber-200">
-                      <div className="p-3 bg-amber-500/10 rounded-xl group-hover:bg-amber-500/20 transition-colors duration-300">
-                        <Flag className="w-6 h-6 text-amber-600" />
+                    <div className="flex items-center gap-3 p-3 bg-yellow-50 rounded-lg">
+                      <Flag className="w-5 h-5 text-yellow-600" />
+                      <div>
+                        <p className="font-medium text-yellow-900">Flagged Content</p>
+                        <p className="text-sm text-yellow-600">{flaggedIssues.length} issues need review</p>
                       </div>
-                      <div className="flex-1">
-                        <p className="font-bold text-amber-900 text-lg">Flagged Content</p>
-                        <p className="text-amber-700 font-medium">{flaggedIssues.length} issues need review</p>
-                      </div>
-                      <div className="text-2xl font-bold text-amber-600">{flaggedIssues.length}</div>
                     </div>
                     
-                    <div className="group flex items-center gap-4 p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl hover:from-green-100 hover:to-emerald-100 transition-all duration-300 border border-green-200">
-                      <div className="p-3 bg-green-500/10 rounded-xl group-hover:bg-green-500/20 transition-colors duration-300">
-                        <CheckCircle className="w-6 h-6 text-green-600" />
+                    <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg">
+                      <CheckCircle className="w-5 h-5 text-green-600" />
+                      <div>
+                        <p className="font-medium text-green-900">Platform Health</p>
+                        <p className="text-sm text-green-600">System running smoothly</p>
                       </div>
-                      <div className="flex-1">
-                        <p className="font-bold text-green-900 text-lg">Platform Health</p>
-                        <p className="text-green-700 font-medium">All systems operational</p>
-                      </div>
-                      <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
                     </div>
                   </div>
                 </CardContent>
               </Card>
 
-              <Card className="relative overflow-hidden bg-white/70 backdrop-blur-sm border-0 shadow-xl hover:shadow-2xl transition-all duration-300">
-                <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-blue-500/5"></div>
-                <CardHeader className="relative border-b border-slate-100 bg-gradient-to-r from-indigo-50 to-blue-50">
-                  <CardTitle className="flex items-center gap-3 text-xl font-bold text-slate-800">
-                    <div className="p-2 bg-indigo-500/10 rounded-xl">
-                      <Shield className="w-6 h-6 text-indigo-600" />
-                    </div>
-                    Quick Actions
-                  </CardTitle>
-                  <CardDescription className="text-slate-600 text-base">Common administrative tasks and shortcuts</CardDescription>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Quick Actions</CardTitle>
+                  <CardDescription>Common administrative tasks</CardDescription>
                 </CardHeader>
-                <CardContent className="relative p-6">
-                  <div className="space-y-4">
+                <CardContent>
+                  <div className="space-y-3">
                     <Button 
                       variant="outline" 
-                      className="w-full justify-start h-14 bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 border-blue-200 hover:border-blue-300 transition-all duration-300 group"
+                      className="w-full justify-start"
                       onClick={() => setActiveTab('users')}
                     >
-                      <div className="p-2 bg-blue-500/10 rounded-lg mr-3 group-hover:bg-blue-500/20 transition-colors duration-300">
-                        <Users className="w-5 h-5 text-blue-600" />
-                      </div>
-                      <div className="text-left">
-                        <div className="font-semibold text-slate-800">Manage Users</div>
-                        <div className="text-xs text-slate-600">View and moderate user accounts</div>
-                      </div>
+                      <Users className="w-4 h-4 mr-2" />
+                      Manage Users
                     </Button>
                     
                     <Button 
                       variant="outline" 
-                      className="w-full justify-start h-14 bg-gradient-to-r from-amber-50 to-orange-50 hover:from-amber-100 hover:to-orange-100 border-amber-200 hover:border-amber-300 transition-all duration-300 group"
+                      className="w-full justify-start"
                       onClick={() => setActiveTab('flagged')}
                     >
-                      <div className="p-2 bg-amber-500/10 rounded-lg mr-3 group-hover:bg-amber-500/20 transition-colors duration-300">
-                        <Flag className="w-5 h-5 text-amber-600" />
-                      </div>
-                      <div className="text-left">
-                        <div className="font-semibold text-slate-800">Review Flagged Content</div>
-                        <div className="text-xs text-slate-600">Moderate reported issues</div>
-                      </div>
+                      <Flag className="w-4 h-4 mr-2" />
+                      Review Flagged Content
                     </Button>
                     
                     <Button 
                       variant="outline" 
-                      className="w-full justify-start h-14 bg-gradient-to-r from-purple-50 to-pink-50 hover:from-purple-100 hover:to-pink-100 border-purple-200 hover:border-purple-300 transition-all duration-300 group"
+                      className="w-full justify-start"
                       onClick={() => setActiveTab('analytics')}
                     >
-                      <div className="p-2 bg-purple-500/10 rounded-lg mr-3 group-hover:bg-purple-500/20 transition-colors duration-300">
-                        <BarChart3 className="w-5 h-5 text-purple-600" />
-                      </div>
-                      <div className="text-left">
-                        <div className="font-semibold text-slate-800">View Analytics</div>
-                        <div className="text-xs text-slate-600">Platform insights and metrics</div>
-                      </div>
+                      <BarChart3 className="w-4 h-4 mr-2" />
+                      View Analytics
                     </Button>
                     
                     <Button 
                       variant="outline" 
-                      className="w-full justify-start h-14 bg-gradient-to-r from-green-50 to-emerald-50 hover:from-green-100 hover:to-emerald-100 border-green-200 hover:border-green-300 transition-all duration-300 group"
+                      className="w-full justify-start"
                       onClick={() => {
                         fetchUsers();
                         fetchFlaggedIssues();
                         fetchAnalytics();
                       }}
                     >
-                      <div className="p-2 bg-green-500/10 rounded-lg mr-3 group-hover:bg-green-500/20 transition-colors duration-300">
-                        <Activity className="w-5 h-5 text-green-600" />
-                      </div>
-                      <div className="text-left">
-                        <div className="font-semibold text-slate-800">Refresh Data</div>
-                        <div className="text-xs text-slate-600">Update all dashboard data</div>
-                      </div>
+                      <Activity className="w-4 h-4 mr-2" />
+                      Refresh Data
                     </Button>
                   </div>
                 </CardContent>
